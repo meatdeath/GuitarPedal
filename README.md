@@ -14,4 +14,4 @@ https://radioprog.ru/post/533
 
 Полезные ссылки:
 https://arduinoplus.ru/gitarnaya-pedal-arduino-uno/
-ююю
+...
