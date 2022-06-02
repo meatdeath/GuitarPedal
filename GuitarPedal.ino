@@ -33,7 +33,6 @@ enum _mode_en {
     MODE_MAX
 };
 
-const char titleString[] PROGMEM = "Guitar Pedal v.1";
 const char EffectString[] PROGMEM  = "Effect";
 
 const char ModeString[MODE_MAX][17] PROGMEM = {
@@ -76,10 +75,14 @@ const char OverdParam[2][17] PROGMEM = {
 const char ChorusStrShort[] PROGMEM = "Delay";
 const char ChorusStr[] PROGMEM = "Chorus delay";
 
-const char CompressTresholdStrShort[] PROGMEM = "Threshold";
-const char CompressTresholdStr[] PROGMEM = "Compr. threshold";
+const char CompressThresholdStrShort[] PROGMEM = "Threshold";
+const char CompressThresholdStr[] PROGMEM = "Compr. threshold";
 const char CompressKoeffStrShort[] PROGMEM = "Koefficient";
 const char CompressKoeffStr[] PROGMEM = "Compr. koeff.";
+const char LevelStr[] PROGMEM = "Level";
+const char ElectroLevelStr[] PROGMEM = "Electro level";
+const char CompressNoiseCutLevelStrShort[] PROGMEM = "Noise cut lev.";
+const char CompressNoiseCutLevelStr[] PROGMEM = "Compr. noise cut";
 
 char displayedParamString[17] = "";
 
@@ -97,25 +100,35 @@ struct MenuItemSt {
 
 enum MenuItemEn {
     MENUITEM_CLEAR = 0,
-    MENUITEM_DISTORTION,
+    MENUITEM_DISTORTION, //1
     MENUITEM_OVERDRIVE,
     MENUITEM_CHORUS,
     MENUITEM_COMPRESS,
-    MENUITEM_ELECTRO,
+    MENUITEM_ELECTRO,   // 5
+
     MENUITEM_DISTORTION_LEVEL,
     MENUITEM_DISTORTION_AMP,
     MENUITEM_DISTORTION_LEVEL_VALUE,
     MENUITEM_DISTORTION_AMP_VALUE,
-    MENUITEM_OVERDRIVE_LEVEL,
+
+    MENUITEM_OVERDRIVE_LEVEL,   // 10
     MENUITEM_OVERDRIVE_AMP,
     MENUITEM_OVERDRIVE_LEVEL_VALUE,
     MENUITEM_OVERDRIVE_AMP_VALUE,
-    MENUITEM_CHORUS_PARAM,
+
     MENUITEM_CHORUS_DELAY,
-    MENUITEM_COMPRESS_TRESHOLD_PARAM,
-    MENUITEM_COMPRESS_KOEFF_PARAM,
-    MENUITEM_COMPRESS_TRESHOLD_VALUE,
-    MENUITEM_COMPRESS_KOEFF_VALUE,
+    MENUITEM_CHORUS_DELAY_VALUE,    // 15
+
+    MENUITEM_COMPRESS_THRESHOLD,
+    MENUITEM_COMPRESS_KOEFF,
+    MENUITEM_COMPRESS_NOISE_CUT,
+    MENUITEM_COMPRESS_THRESHOLD_VALUE,
+    MENUITEM_COMPRESS_KOEFF_VALUE,      // 20
+    MENUITEM_COMPRESS_NOISE_CUT_VALUE,
+
+    MENUITEM_ELECTRO_LEVEL,
+    MENUITEM_ELECTRO_LEVEL_VALUE,
+
     MENUITEM_MAX
 };
 
@@ -123,62 +136,62 @@ byte currentMenuItem = 0;
 
 #define EMPTY 0xFF
 
- MenuItem_t menuItem[]  = {
-    {
+ MenuItem_t menuItem[MENUITEM_MAX]  = {
+    {   // 0 - MENUITEM_CLEAR
         .mode = MODE_CLEAR,
         .title = EffectString,
         .string = ModeString[MODE_CLEAR],
         .leftIndex = MENUITEM_ELECTRO,
         .rightIndex = MENUITEM_DISTORTION,
         .upIndex = EMPTY,
-        .downIndex = EMPTY // todo: goto params 
+        .downIndex = EMPTY
     },
-    {
+    {   // 1 - MENUITEM_DISTORTION
         .mode = MODE_DISTORTION,
         .title = EffectString,
         .string = ModeString[MODE_DISTORTION],
         .leftIndex = MENUITEM_CLEAR,
         .rightIndex = MENUITEM_OVERDRIVE,
         .upIndex = EMPTY,
-        .downIndex = MENUITEM_DISTORTION_LEVEL // todo: goto params 
+        .downIndex = MENUITEM_DISTORTION_LEVEL
     },
-    {
+    {   // MENUITEM_OVERDRIVE
         .mode = MODE_OVERDRIVE,
         .title = EffectString,
         .string = ModeString[MODE_OVERDRIVE],
         .leftIndex = MENUITEM_DISTORTION,
         .rightIndex = MENUITEM_CHORUS,
         .upIndex = EMPTY,
-        .downIndex = EMPTY // todo: goto params 
+        .downIndex = MENUITEM_OVERDRIVE_LEVEL
     },
-    {
+    {   // MENUITEM_CHORUS
         .mode = MODE_CHORUS,
         .title = EffectString,
         .string = ModeString[MODE_CHORUS],
         .leftIndex = MENUITEM_OVERDRIVE,
         .rightIndex = MENUITEM_COMPRESS,
         .upIndex = EMPTY,
-        .downIndex = EMPTY // todo: goto params 
+        .downIndex = MENUITEM_CHORUS_DELAY 
     },
-    {
+    {   // MENUITEM_COMPRESS
         .mode = MODE_COMPRESS,
         .title = EffectString,
         .string = ModeString[MODE_COMPRESS],
         .leftIndex = MENUITEM_CHORUS,
         .rightIndex = MENUITEM_ELECTRO,
         .upIndex = EMPTY,
-        .downIndex = EMPTY // todo: goto params 
+        .downIndex = MENUITEM_COMPRESS_THRESHOLD
     },
-    {
+    {   // MENUITEM_ELECTRO
         .mode = MODE_ELECTRO,
         .title = EffectString,
         .string = ModeString[MODE_ELECTRO],
         .leftIndex = MENUITEM_COMPRESS,
         .rightIndex = MENUITEM_CLEAR,
         .upIndex = EMPTY,
-        .downIndex = EMPTY // todo: goto params 
+        .downIndex = MENUITEM_ELECTRO_LEVEL 
     },
-    {
+    {   // MENUITEM_DISTORTION_LEVEL
         .mode = MODE_DISTORTION,
         .title = ModeString[MODE_DISTORTION],
         .string = DistParamShort[DIST_PARAM_LEVEL],
@@ -187,7 +200,7 @@ byte currentMenuItem = 0;
         .upIndex = MENUITEM_DISTORTION,
         .downIndex = MENUITEM_DISTORTION_LEVEL_VALUE
     },
-    {
+    {   // MENUITEM_DISTORTION_AMP
         .mode = MODE_DISTORTION,
         .title = ModeString[MODE_DISTORTION],
         .string = DistParamShort[DIST_PARAM_AMP],
@@ -196,25 +209,25 @@ byte currentMenuItem = 0;
         .upIndex = MENUITEM_DISTORTION,
         .downIndex = MENUITEM_DISTORTION_AMP_VALUE
     },
-    {
+    {   // MENUITEM_DISTORTION_LEVEL_VALUE
         .mode = MODE_DISTORTION,
         .title = DistParam[DIST_PARAM_LEVEL],
-        .string = displayedParamString,
-        .leftIndex = EMPTY,
-        .rightIndex = EMPTY,
-        .upIndex = MENUITEM_DISTORTION_AMP,
-        .downIndex = EMPTY // todo:
-    },
-    {
-        .mode = MODE_DISTORTION,
-        .title = DistParam[DIST_PARAM_AMP],
         .string = displayedParamString,
         .leftIndex = EMPTY,
         .rightIndex = EMPTY,
         .upIndex = MENUITEM_DISTORTION_LEVEL,
         .downIndex = EMPTY // todo:
     },
-    {
+    {   // MENUITEM_DISTORTION_AMP_VALUE
+        .mode = MODE_DISTORTION,
+        .title = DistParam[DIST_PARAM_AMP],
+        .string = displayedParamString,
+        .leftIndex = EMPTY,
+        .rightIndex = EMPTY,
+        .upIndex = MENUITEM_DISTORTION_AMP,
+        .downIndex = EMPTY // todo:
+    },
+    {   // MENUITEM_OVERDRIVE_LEVEL
         .mode = MODE_OVERDRIVE,
         .title = ModeString[MODE_OVERDRIVE],
         .string = OverdParamShort[OVERD_PARAM_LEVEL],
@@ -223,7 +236,7 @@ byte currentMenuItem = 0;
         .upIndex = MENUITEM_OVERDRIVE,
         .downIndex = MENUITEM_OVERDRIVE_LEVEL_VALUE
     },
-    {
+    {   // MENUITEM_OVERDRIVE_AMP
         .mode = MODE_OVERDRIVE,
         .title = ModeString[MODE_OVERDRIVE],
         .string = OverdParamShort[OVERD_PARAM_AMP],
@@ -232,80 +245,121 @@ byte currentMenuItem = 0;
         .upIndex = MENUITEM_OVERDRIVE,
         .downIndex = MENUITEM_OVERDRIVE_AMP_VALUE
     },
-    {
+    {   // MENUITEM_OVERDRIVE_LEVEL_VALUE
         .mode = MODE_OVERDRIVE,
         .title = OverdParam[OVERD_PARAM_LEVEL],
         .string = displayedParamString,
         .leftIndex = EMPTY,
         .rightIndex = EMPTY,
-        .upIndex = MENUITEM_OVERDRIVE_AMP,
-        .downIndex = EMPTY // todo:
+        .upIndex = MENUITEM_OVERDRIVE_LEVEL,
+        .downIndex = EMPTY
     },
-    {
+    {   // MENUITEM_OVERDRIVE_AMP_VALUE
         .mode = MODE_OVERDRIVE,
         .title = OverdParam[OVERD_PARAM_AMP],
         .string = displayedParamString,
         .leftIndex = EMPTY,
         .rightIndex = EMPTY,
         .upIndex = MENUITEM_OVERDRIVE_AMP,
-        .downIndex = EMPTY // todo:
+        .downIndex = EMPTY
     },
-    {
+    {   // MENUITEM_CHORUS_DELAY
         .mode = MODE_CHORUS,
         .title = ModeString[MODE_CHORUS],
         .string = ChorusStrShort,
         .leftIndex = EMPTY,
         .rightIndex = EMPTY,
         .upIndex = MENUITEM_CHORUS,
-        .downIndex = MENUITEM_CHORUS_DELAY // todo:
+        .downIndex = MENUITEM_CHORUS_DELAY_VALUE
     },
-    {
+    {   // MENUITEM_CHORUS_DELAY_VALUE
         .mode = MODE_CHORUS,
         .title = ChorusStr,
         .string = displayedParamString,
         .leftIndex = EMPTY,
         .rightIndex = EMPTY,
-        .upIndex = MENUITEM_CHORUS_PARAM,
-        .downIndex = EMPTY // todo:
+        .upIndex = MENUITEM_CHORUS_DELAY,
+        .downIndex = EMPTY
     },
-    {
+    {   // MENUITEM_COMPRESS_THRESHOLD
         .mode = MODE_COMPRESS,
         .title = ModeString[MODE_COMPRESS],
-        .string = CompressTresholdStrShort,
-        .leftIndex = MENUITEM_COMPRESS_KOEFF_PARAM,
-        .rightIndex = MENUITEM_COMPRESS_KOEFF_PARAM,
+        .string = CompressThresholdStrShort,
+        .leftIndex = MENUITEM_COMPRESS_NOISE_CUT,
+        .rightIndex = MENUITEM_COMPRESS_KOEFF,
         .upIndex = MENUITEM_COMPRESS,
-        .downIndex = MENUITEM_COMPRESS_TRESHOLD_VALUE // todo:
+        .downIndex = MENUITEM_COMPRESS_THRESHOLD_VALUE
     },
-    {
+    {   // MENUITEM_COMPRESS_KOEFF
         .mode = MODE_COMPRESS,
         .title = ModeString[MODE_COMPRESS],
         .string = CompressKoeffStrShort,
-        .leftIndex = MENUITEM_COMPRESS_TRESHOLD_PARAM,
-        .rightIndex = MENUITEM_COMPRESS_TRESHOLD_PARAM,
+        .leftIndex = MENUITEM_COMPRESS_THRESHOLD,
+        .rightIndex = MENUITEM_COMPRESS_NOISE_CUT,
         .upIndex = MENUITEM_COMPRESS,
-        .downIndex = MENUITEM_COMPRESS_KOEFF_VALUE // todo:
+        .downIndex = MENUITEM_COMPRESS_KOEFF_VALUE
     },
-    {
+    {   //MENUITEM_COMPRESS_NOISE_CUT
+        .mode = MODE_COMPRESS,
+        .title = ModeString[MODE_COMPRESS],
+        .string = CompressNoiseCutLevelStrShort,
+        .leftIndex = MENUITEM_COMPRESS_KOEFF,
+        .rightIndex = MENUITEM_COMPRESS_THRESHOLD,
+        .upIndex = MENUITEM_COMPRESS,
+        .downIndex = MENUITEM_COMPRESS_NOISE_CUT_VALUE
+    },
+    {   // MENUITEM_COMPRESS_THRESHOLD_VALUE
+        .mode = MODE_COMPRESS,
+        .title = CompressThresholdStr,
+        .string = displayedParamString,
+        .leftIndex = EMPTY,
+        .rightIndex = EMPTY,
+        .upIndex = MENUITEM_COMPRESS_THRESHOLD,
+        .downIndex = EMPTY
+    },
+    {   // MENUITEM_COMPRESS_KOEFF_VALUE
         .mode = MODE_COMPRESS,
         .title = CompressKoeffStr,
         .string = displayedParamString,
         .leftIndex = EMPTY,
         .rightIndex = EMPTY,
-        .upIndex = MENUITEM_COMPRESS_TRESHOLD_PARAM,
-        .downIndex = EMPTY // todo:
+        .upIndex = MENUITEM_COMPRESS_KOEFF,
+        .downIndex = EMPTY
     },
-    {
+    {   // MENUITEM_COMPRESS_NOISE_CUT
         .mode = MODE_COMPRESS,
-        .title = CompressKoeffStr,
+        .title = CompressNoiseCutLevelStr,
         .string = displayedParamString,
         .leftIndex = EMPTY,
         .rightIndex = EMPTY,
-        .upIndex = MENUITEM_COMPRESS_KOEFF_PARAM,
-        .downIndex = EMPTY // todo:
+        .upIndex = MENUITEM_COMPRESS_NOISE_CUT,
+        .downIndex = EMPTY
+    },
+    {   // MENUITEM_ELECTRO_LEVEL
+        .mode = MODE_ELECTRO,
+        .title = ModeString[MODE_ELECTRO],
+        .string = LevelStr,
+        .leftIndex = EMPTY,
+        .rightIndex = EMPTY,
+        .upIndex = MENUITEM_ELECTRO,
+        .downIndex = MENUITEM_ELECTRO_LEVEL_VALUE
+    },
+    {   // MENUITEM_ELECTRO_LEVEL_VALUE
+        .mode = MODE_ELECTRO,
+        .title = ElectroLevelStr,
+        .string = displayedParamString,
+        .leftIndex = EMPTY,
+        .rightIndex = EMPTY,
+        .upIndex = MENUITEM_ELECTRO_LEVEL,
+        .downIndex = EMPTY
     }
 };
 
+
+byte ModeIndex = MODE_CLEAR; //MODE_OFF; // перменная выбора режима работы
+// -------------- Энкодер + кнопка -------------------------------------------------
+#define BTN_CHK_LOOPS 100 // Колличество повторений между проверками кнопки
+byte LoopCount = 0; // Перменная Счетчика циклов пропуска
 
 enum signalLevelsEn {
     LEVEL_0  = 0,
@@ -334,48 +388,39 @@ enum signalLevelsEn {
     LEVEL_6_25 = INT16_MAX / 16
 };
 
-typedef struct LevelsSt {
+typedef struct ParamSt {
     int16_t value;
-    char string[5];
-} Levels_t;
+    char string[7];
+} Param_t;
+
 #define LEVELS_COUNT 19
-const Levels_t Levels[LEVELS_COUNT] PROGMEM = {
-    {LEVEL_5,   "5%%"}, {LEVEL_10, "10%%"}, {LEVEL_15, "15%%"}, {LEVEL_20, "20%%"}, 
-    {LEVEL_25, "25%%"}, {LEVEL_30, "30%%"}, {LEVEL_35, "35%%"}, {LEVEL_40, "40%%"},
-    {LEVEL_45, "45%%"}, {LEVEL_50, "50%%"}, {LEVEL_55, "55%%"}, {LEVEL_60, "60%%"}, 
-    {LEVEL_65, "65%%"}, {LEVEL_70, "70%%"}, {LEVEL_75, "75%%"}, {LEVEL_80, "80%%"},
-    {LEVEL_85, "85%%"}, {LEVEL_90, "90%%"}, {LEVEL_95, "95%%"}
+const Param_t Levels[LEVELS_COUNT] PROGMEM = {
+    {LEVEL_5,   "5%"}, {LEVEL_10, "10%"}, {LEVEL_15, "15%"}, {LEVEL_20, "20%"}, 
+    {LEVEL_25, "25%"}, {LEVEL_30, "30%"}, {LEVEL_35, "35%"}, {LEVEL_40, "40%"},
+    {LEVEL_45, "45%"}, {LEVEL_50, "50%"}, {LEVEL_55, "55%"}, {LEVEL_60, "60%"}, 
+    {LEVEL_65, "65%"}, {LEVEL_70, "70%"}, {LEVEL_75, "75%"}, {LEVEL_80, "80%"},
+    {LEVEL_85, "85%"}, {LEVEL_90, "90%"}, {LEVEL_95, "95%"}
 };
 
-typedef struct amplificationsSt {
-    int16_t value;
-    char string[5];
-} Amps_t;
+// ---------------------------------------------------------------------------------
+// Distorsion
+
 #define DIST_AMPS_COUNT 19
-const Amps_t DistAmps[DIST_AMPS_COUNT] PROGMEM = {
+const Param_t DistAmps[DIST_AMPS_COUNT] PROGMEM = {
     { 8,  " 0"}, { 9,  "+1"}, {10,  "+2"}, {11,  "+3"}, 
     {12,  "+4"}, {13,  "+5"}, {14,  "+6"}, {15,  "+7"}, 
     {16,  "+8"}, {17,  "+9"}, {18, "+10"}, {19, "+11"}, 
     {20, "+12"}, {21, "+13"}, {22, "+14"}, {23, "+15"}, 
     {24, "+16"}, {25, "+17"}, {26, "+18"},
 };
-
-byte ModeIndex = MODE_CLEAR; //MODE_OFF; // перменная выбора режима работы
-// -------------- Энкодер + кнопка -------------------------------------------------
-#define BTN_CHK_LOOPS 100 // Колличество повторений между проверками кнопки
-byte LoopCount = 0; // Перменная Счетчика циклов пропуска
-// ---------------------------------------------------------------------------------
 byte DistAmpIndex = 8; // Коэффициент усиления Дисторшн, 8 - без усиления
 int16_t DistLevelIndex = 14; //75%
-// ---------------------------------------------------------------------------------
 
-typedef struct OverAmpSt {
-    int16_t value;
-    char string[15];
-} OverAmp_t;
+// ---------------------------------------------------------------------------------
+// Overdrive
 
 #define OVER_AMP_COUNT 19
-OverAmp_t OverAmps[OVER_AMP_COUNT] = {
+const Param_t OverAmps[OVER_AMP_COUNT] PROGMEM = {
     { 8,  "-8"}, { 9,  "-7"}, {10,  "-6"}, {11,  "-5"},
     {12,  "-4"}, {13,  "-3"}, {14,  "-2"}, {15,  "-1"},
     {16,   "0"}, {17,  "+1"}, {18,  "+2"}, {19,  "+3"},
@@ -385,16 +430,51 @@ OverAmp_t OverAmps[OVER_AMP_COUNT] = {
 
 byte OverAmpIndex = 0; // Коэффициент усиления эффекта Овердрайв, 16 - без эффекта
 int16_t OverLevelIndex = 14; //75;
-// ---------------------------------------------------------------------------------
 
-int Chorus[256]; // Chorus эффект
-int16_t ChorusDelay = 0; // перменная массива 0 - 256
 // ---------------------------------------------------------------------------------
-int16_t CompNoiseCutLevel = 512;
-int ComprT = 30; // Compressor эффект
-int16_t CompThreshold = LEVEL_75;
+// Chorus эффект
+
+#define CHORUS_DEPTH        256
+#define CHORUS_DELAYS_COUNT 11
+
+const Param_t ChorusDelay[CHORUS_DELAYS_COUNT] PROGMEM = {
+    {  256*0/10,  "0%"}, { 256*10/10, "10%"}, { 256*20/10, "20%"},
+    { 256*30/10, "30%"}, { 256*40/10, "40%"}, { 256*50/10, "50%"},
+    { 256*60/10, "60%"}, { 256*70/10, "70%"}, { 256*80/10, "80%"},
+    { 256*90/10, "90%"}, { 256*100/10, "100%"},
+};
+
+int Chorus[CHORUS_DEPTH]; 
+int16_t ChorusDelayIndex = 0; // перменная массива 0 - 256
+
 // ---------------------------------------------------------------------------------
-int ElectroLevel = 15; // Electro
+// Compressor эффект
+
+#define COMPRESS_KOEFF_COUNT    21
+const Param_t CompressKoeff[COMPRESS_KOEFF_COUNT] PROGMEM = {
+    { 10, "10" }, { 11, "11" }, { 12, "12" }, { 13, "13" }, { 14, "14" },
+    { 15, "15" }, { 16, "16" }, { 17, "17" }, { 18, "18" }, { 19, "19" },
+    { 20, "20" }, { 21, "21" }, { 22, "22" }, { 23, "23" }, { 24, "24" },
+    { 25, "25" }, { 26, "26" }, { 27, "27" }, { 28, "28" }, { 29, "29" },
+    { 30, "30" },
+};
+#define COMPRESS_NOISE_CUT_LEVEL_COUNT    5
+const Param_t CompressNoiseCutLevel[COMPRESS_NOISE_CUT_LEVEL_COUNT] PROGMEM = {
+    { 0,   "none"   }, 
+    { 128, "low"    }, 
+    { 256, "middle" }, 
+    { 512, "high"   }, 
+    { 768, "extra"  }
+};
+
+int CompressKoeffIndex = 30; 
+int16_t CompressNoiseCutLevelIndex = 3;
+int16_t CompressThresholdIndex = 14;
+
+// ---------------------------------------------------------------------------------
+// Electro
+
+int ElectroLevelIndex = 15; 
 int ElectroCounter = 0;
 int ElectroOut = 0;
 // ---------------------------------------------------------------------------------
@@ -426,7 +506,7 @@ void setup(){
     // Print a message to the LCD.
     lcd.backlight();
     lcd.setCursor(0,0);
-    lcd.print(titleString);
+    lcd.print("Guitar Pedal v.1");
     lcd.setCursor(0,1);
     lcd.print("Starting...");
     delay(2000);
@@ -458,25 +538,17 @@ void loop() {
             int8_t step = 0;
             bool ProtectionDelay = false;
             //step = enc.read();
-            if( (digitalRead(LEFT_PIN)) == LOW && menuItem[currentMenuItem].leftIndex != EMPTY ) {
+            if( (digitalRead(LEFT_PIN)) == LOW ) {
                 switch( currentMenuItem ) {
-                    case MENUITEM_DISTORTION_LEVEL_VALUE:
-                        if( DistLevelIndex > 0) DistLevelIndex--;
-                        strncpy(displayedParamString, Levels[DistLevelIndex].string, 14);
-                        break;
-                    case MENUITEM_DISTORTION_AMP_VALUE:
-                        if( DistAmpIndex > 0) DistAmpIndex--;
-                        strncpy(displayedParamString, DistAmps[DistAmpIndex].string, 14);
-                        break;
-                    case MENUITEM_OVERDRIVE_LEVEL_VALUE:
-                        if (OverLevelIndex > 0) OverLevelIndex--;
-                        strncpy(displayedParamString, Levels[OverLevelIndex].string, 14);
-                        break;
-                    case MENUITEM_OVERDRIVE_AMP_VALUE:
-                        if (OverAmpIndex > 0) OverAmpIndex--;
-                        strncpy(displayedParamString, OverAmps[OverAmpIndex].string, 14);
-                        break;
-
+                    case MENUITEM_DISTORTION_LEVEL_VALUE: if( DistLevelIndex > 0 )   DistLevelIndex--; break;
+                    case MENUITEM_DISTORTION_AMP_VALUE:   if( DistAmpIndex > 0 )     DistAmpIndex--; break;
+                    case MENUITEM_OVERDRIVE_LEVEL_VALUE:  if( OverLevelIndex > 0 )   OverLevelIndex--; break;
+                    case MENUITEM_OVERDRIVE_AMP_VALUE:    if( OverAmpIndex > 0 )     OverAmpIndex--; break;
+                    case MENUITEM_CHORUS_DELAY_VALUE:     if( ChorusDelayIndex > 0 ) ChorusDelayIndex--; break;
+                    case MENUITEM_COMPRESS_KOEFF_VALUE:     if( CompressKoeffIndex > 0 )         CompressKoeffIndex--; break;
+                    case MENUITEM_COMPRESS_THRESHOLD_VALUE: if( CompressThresholdIndex > 0 )     CompressThresholdIndex--; break;
+                    case MENUITEM_COMPRESS_NOISE_CUT_VALUE: if( CompressNoiseCutLevelIndex > 0 ) CompressNoiseCutLevelIndex--; break;
+                    case MENUITEM_ELECTRO_LEVEL_VALUE:      if( ElectroLevelIndex > 0 )          ElectroLevelIndex--; break;
                 }
                 if (menuItem[currentMenuItem].leftIndex != EMPTY) {
                     currentMenuItem = menuItem[currentMenuItem].leftIndex;
@@ -486,24 +558,17 @@ void loop() {
                 }
                 ProtectionDelay = true;
             }
-            if( (digitalRead(RIGHT_PIN)) == LOW && menuItem[currentMenuItem].rightIndex != EMPTY ) {
+            if( (digitalRead(RIGHT_PIN)) == LOW ) {
                 switch( currentMenuItem ) {
-                    case MENUITEM_DISTORTION_LEVEL_VALUE:
-                        if( DistLevelIndex < (LEVELS_COUNT-1)) DistLevelIndex++;
-                        strncpy(displayedParamString, Levels[DistLevelIndex].string, 14);
-                        break;
-                    case MENUITEM_DISTORTION_AMP_VALUE:
-                        if( DistAmpIndex < (DIST_AMPS_COUNT-1)) DistAmpIndex++;
-                        strncpy(displayedParamString, DistAmps[DistAmpIndex].string, 14);
-                        break;
-                    case MENUITEM_OVERDRIVE_LEVEL_VALUE:
-                        if (OverLevelIndex < (LEVELS_COUNT-1)) OverLevelIndex++;
-                        strncpy(displayedParamString, Levels[OverLevelIndex].string, 14);
-                        break;
-                    case MENUITEM_OVERDRIVE_AMP_VALUE:
-                        if (OverAmpIndex < (OVER_AMP_COUNT-1)) OverAmpIndex++;
-                        strncpy(displayedParamString, OverAmps[OverAmpIndex].string, 14);
-                        break;
+                    case MENUITEM_DISTORTION_LEVEL_VALUE: if( DistLevelIndex < (LEVELS_COUNT-1) )  DistLevelIndex++; break;
+                    case MENUITEM_DISTORTION_AMP_VALUE:   if( DistAmpIndex < (DIST_AMPS_COUNT-1) ) DistAmpIndex++; break;
+                    case MENUITEM_OVERDRIVE_LEVEL_VALUE:  if( OverLevelIndex < (LEVELS_COUNT-1) )  OverLevelIndex++; break;
+                    case MENUITEM_OVERDRIVE_AMP_VALUE:    if( OverAmpIndex < (OVER_AMP_COUNT-1) )  OverAmpIndex++; break;
+                    case MENUITEM_CHORUS_DELAY_VALUE:     if( ChorusDelayIndex < (CHORUS_DELAYS_COUNT-1) ) ChorusDelayIndex++; break;
+                    case MENUITEM_COMPRESS_KOEFF_VALUE:     if( CompressKoeffIndex < (COMPRESS_KOEFF_COUNT-1) ) CompressKoeffIndex++; break;
+                    case MENUITEM_COMPRESS_THRESHOLD_VALUE: if( CompressThresholdIndex < (LEVELS_COUNT-1) ) CompressThresholdIndex++; break;
+                    case MENUITEM_COMPRESS_NOISE_CUT_VALUE: if( CompressNoiseCutLevelIndex < (COMPRESS_NOISE_CUT_LEVEL_COUNT-1) ) CompressNoiseCutLevelIndex++; break;
+                    case MENUITEM_ELECTRO_LEVEL_VALUE:      if( ElectroLevelIndex < (LEVELS_COUNT-1) ) ElectroLevelIndex++; break;
                 }
                 if (menuItem[currentMenuItem].rightIndex != EMPTY) {
                     currentMenuItem = menuItem[currentMenuItem].rightIndex;
@@ -522,16 +587,41 @@ void loop() {
                 ProtectionDelay = true;
             }
 
+            switch( currentMenuItem ) {
+                case MENUITEM_DISTORTION_LEVEL_VALUE:   strncpy_P(displayedParamString, Levels[DistLevelIndex].string, 14); break;
+                case MENUITEM_DISTORTION_AMP_VALUE:     strncpy_P(displayedParamString, DistAmps[DistAmpIndex].string, 14); break;
+                case MENUITEM_OVERDRIVE_LEVEL_VALUE:    strncpy_P(displayedParamString, Levels[OverLevelIndex].string, 14); break;
+                case MENUITEM_OVERDRIVE_AMP_VALUE:      strncpy_P(displayedParamString, OverAmps[OverAmpIndex].string, 14); break;
+                case MENUITEM_CHORUS_DELAY_VALUE:       strncpy_P(displayedParamString, ChorusDelay[ChorusDelayIndex].string, 14); break;
+                case MENUITEM_COMPRESS_KOEFF_VALUE:     strncpy_P(displayedParamString, CompressKoeff[CompressKoeffIndex].string, 14) ; break;
+                case MENUITEM_COMPRESS_THRESHOLD_VALUE: strncpy_P(displayedParamString, Levels[CompressThresholdIndex].string, 14) ; break;
+                case MENUITEM_COMPRESS_NOISE_CUT_VALUE: strncpy_P(displayedParamString, CompressNoiseCutLevel[CompressNoiseCutLevelIndex].string, 14) ; break;
+                case MENUITEM_ELECTRO_LEVEL_VALUE:      strncpy_P(displayedParamString, Levels[ElectroLevelIndex].string, 14) ; break;
+            }
 
+
+            char tmp[17];
             lcd.setCursor(0,0);
-            lcd.print( menuItem[currentMenuItem].title );
+            strcpy_P(tmp, menuItem[currentMenuItem].title);
+            lcd.print( tmp );
             lcd.print("                ");
             lcd.setCursor(0,1);
             if( menuItem[currentMenuItem].leftIndex != -1 ) lcd.print("<"); else lcd.print(" ");
-            byte spaces1 = (14-strlen(menuItem[currentMenuItem].string))/2;
-            byte spaces2 = (15-strlen(menuItem[currentMenuItem].string))/2;
+            uint16_t len = 0;
+            if( menuItem[currentMenuItem].string == displayedParamString ) {
+                len = strlen(menuItem[currentMenuItem].string);
+            } else {
+                len = strlen_P(menuItem[currentMenuItem].string);
+            }
+            byte spaces1 = (14-len)/2;
+            byte spaces2 = (15-len)/2;
             while(spaces1--) lcd.print(" ");
-            lcd.print(menuItem[currentMenuItem].string);
+            if( menuItem[currentMenuItem].string == displayedParamString ) {
+                strncpy(tmp, menuItem[currentMenuItem].string, 16);
+            } else {
+                strncpy_P(tmp, menuItem[currentMenuItem].string, 16);
+            }
+            lcd.print(tmp);
             while(spaces2--) lcd.print(" ");
             if( menuItem[currentMenuItem].rightIndex != -1 ) lcd.print(">"); else lcd.print(" ");
             
@@ -555,9 +645,9 @@ void loop() {
             //     if (ChorusDelay > 250) ChorusDelay = 250;
             //     break;
             // case MODE_COMPRESS:
-            //     ComprT = ComprT - step; // Если энкодер зафиксирует поворот, то значение переменной i изменится:
-            //     if ( ComprT < 10 ) { ComprT = 10; }
-            //     if ( ComprT > 30 ) { ComprT = 30; }
+            //     CompressKoeffIndex = CompressKoeffIndex - step; // Если энкодер зафиксирует поворот, то значение переменной i изменится:
+            //     if ( CompressKoeffIndex < 10 ) { CompressKoeffIndex = 10; }
+            //     if ( CompressKoeffIndex > 30 ) { CompressKoeffIndex = 30; }
             //     break;
             // case MODE_ELECTRO:
             //     ElectroLevel = ElectroLevel + step; // Если энкодер зафиксирует поворот, то значение переменной i изменится:
@@ -567,7 +657,7 @@ void loop() {
             // }
             
             if (ProtectionDelay) {
-                delay (500);
+                delay (250);
             }
         //---------------------------------------------------------------------------------------------
         } else { // устройсво электрически не включено
@@ -626,7 +716,7 @@ ISR(TIMER1_CAPT_vect) // Команда обработки прерывания 
                 static byte horus_write_index = 0;
                 byte horus_out_index = 0;
                 Chorus[horus_write_index] = Signal; // Все время записываем 256 значений -> Chorus[horus_write_index]
-                horus_out_index = horus_write_index - ChorusDelay;
+                horus_out_index = horus_write_index - ChorusDelay[ChorusDelayIndex].value;
                 if (Signal < Chorus[horus_out_index]) {
                     Signal = Chorus[horus_out_index];
                 }
@@ -637,18 +727,18 @@ ISR(TIMER1_CAPT_vect) // Команда обработки прерывания 
         //-----------------------------------------------------------------------------------------
         // ****** Эффект Compress ******
         case MODE_COMPRESS: 
-            if (Signal > CompNoiseCutLevel ) {
-                Signal = Signal + (CompThreshold - Signal)/ComprT;
+            if (Signal > CompressNoiseCutLevel[CompressNoiseCutLevelIndex].value ) {
+                Signal = Signal + (Levels[CompressThresholdIndex].value - Signal)/CompressKoeff[CompressKoeffIndex].value;
             }
-            if (Signal < -CompNoiseCutLevel ) {
-                Signal = Signal - (CompThreshold + Signal)/ComprT;
+            if (Signal < -CompressNoiseCutLevel[CompressNoiseCutLevelIndex].value ) {
+                Signal = Signal - (Levels[CompressThresholdIndex].value + Signal)/CompressKoeff[CompressKoeffIndex].value;
             }
             break;
 
         //-----------------------------------------------------------------------------------------
         // ****** Эффект Electro ******
         case MODE_ELECTRO: 
-            if (ElectroCounter > ElectroLevel) {
+            if (ElectroCounter > Levels[ElectroLevelIndex].value) {
                 ElectroOut = Signal;
                 ElectroCounter = 0;
             } else {
