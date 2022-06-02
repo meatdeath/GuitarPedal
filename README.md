@@ -11,6 +11,10 @@ https://radioprog.ru/post/533
 * D7 - Exit
 * D12 - педаль включения-выключения
 
+Примеры экранов:
+[alt text](https://github.com/meatdeath/GuitarPedal/blob/main/Screen_examples/IMG_20220601_212732.jpg)
+[alt text](https://github.com/meatdeath/GuitarPedal/blob/main/Screen_examples/IMG_20220601_212746.jpg)
+[alt text](https://github.com/meatdeath/GuitarPedal/blob/main/Screen_examples/IMG_20220601_212823.jpg)
 
 Полезные ссылки:
 https://arduinoplus.ru/gitarnaya-pedal-arduino-uno/
