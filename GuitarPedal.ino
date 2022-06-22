@@ -522,10 +522,15 @@ void setup(){
 
 //-----------------------------------------------------------------------------
 
+bool bypass = false;
+
 void loop() {
     LoopCount = LoopCount + 1;
     if (LoopCount == BTN_CHK_LOOPS) {
         if (digitalRead(FOOT_PIN)==HIGH) {
+            bypass = !bypass;
+        }
+        if (!bypass) {
             int8_t step = 0;
             bool ProtectionDelay = false;
             //step = enc.read();
@@ -624,7 +629,7 @@ void loop() {
             lcd.setCursor(0,0);
             lcd.print("                ");
             lcd.setCursor(0,1);
-            lcd.print("      OFF       ");
+            lcd.print("     BYPASS     ");
         }
         LoopCount = 0;
     }
