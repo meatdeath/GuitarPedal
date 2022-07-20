@@ -11,7 +11,7 @@
 LiquidCrystal_I2C lcd(0x3F,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 // ------------- Pins --------------------------------------------------------------
-#define FOOT_PIN        12 // Нажатие "Ножной" кнопки ВКЛ/ВЫКЛ устройсва
+#define FOOT_PIN        12 // Нажатие "Ножной" кнопки ВКЛ/ВЫКЛ устройства
 #define LEFT_PIN        4  // D4 мастер кнопка переключатель режимов left
 #define RIGHT_PIN       5  // D5 мастер кнопка переключатель режимов right
 #define ENTER_PIN       6  // D6 мастер кнопка переключатель режимов enter
@@ -24,24 +24,26 @@ LiquidCrystal_I2C lcd(0x3F,16,2);  // set the LCD address to 0x27 for a 16 chars
 #define PWM_QTY         2 // Используем 2 ШИМ-а параллельно 2х8 Бит
 // ------------- РЕЖИМ -------------------------------------------------------------
 enum _mode_en {
-    MODE_CLEAR,
+    MODE_OFF,
     MODE_DISTORTION,
     MODE_OVERDRIVE,
     MODE_CHORUS,
     MODE_COMPRESS,
     MODE_ELECTRO,
+    MODE_GENERATOR,
     MODE_MAX
 };
 
 const char EffectString[] PROGMEM  = "Effect";
 
 const char ModeString[MODE_MAX][17] PROGMEM = {
-    "Clear",
+    "Off",
     "Distortion",
     "Overdrive",
     "Chorus",
     "Compress",
-    "Electro"
+    "Electro",
+    "Generator"
 };
 
 enum DistParamsEn {
@@ -71,6 +73,7 @@ const char OverdParam[2][17] PROGMEM = {
     "Overd. level",
     "Overd. ampl."
 };
+const char GenVolumeTitleStr[] PROGMEM = "Gen. volume";
 
 const char ChorusStrShort[] PROGMEM = "Delay";
 const char ChorusStr[] PROGMEM = "Chorus delay";
@@ -83,6 +86,7 @@ const char LevelStr[] PROGMEM = "Level";
 const char ElectroLevelStr[] PROGMEM = "Electro level";
 const char CompressNoiseCutLevelStrShort[] PROGMEM = "Noise cut lev.";
 const char CompressNoiseCutLevelStr[] PROGMEM = "Compr. noise cut";
+const char VolumeStr[] PROGMEM = "Volume";
 
 char displayedParamString[17] = "";
 
@@ -129,6 +133,10 @@ enum MenuItemEn {
     MENUITEM_ELECTRO_LEVEL,
     MENUITEM_ELECTRO_LEVEL_VALUE,
 
+    MENUITEM_GENERATOR,
+    MENUITEM_GENERATOR_VOLUME,
+    MENUITEM_GENERATOR_VOLUME_VALUE,
+
     MENUITEM_MAX
 };
 
@@ -138,10 +146,10 @@ byte currentMenuItem = 0;
 
  MenuItem_t menuItem[MENUITEM_MAX]  = {
     {   // 0 - MENUITEM_CLEAR
-        .mode = MODE_CLEAR,
+        .mode = MODE_OFF,
         .title = EffectString,
-        .string = ModeString[MODE_CLEAR],
-        .leftIndex = MENUITEM_ELECTRO,
+        .string = ModeString[MODE_OFF],
+        .leftIndex = MENUITEM_GENERATOR,
         .rightIndex = MENUITEM_DISTORTION,
         .upIndex = EMPTY,
         .downIndex = EMPTY
@@ -187,7 +195,7 @@ byte currentMenuItem = 0;
         .title = EffectString,
         .string = ModeString[MODE_ELECTRO],
         .leftIndex = MENUITEM_COMPRESS,
-        .rightIndex = MENUITEM_CLEAR,
+        .rightIndex = MENUITEM_GENERATOR,
         .upIndex = EMPTY,
         .downIndex = MENUITEM_ELECTRO_LEVEL 
     },
@@ -352,14 +360,41 @@ byte currentMenuItem = 0;
         .rightIndex = EMPTY,
         .upIndex = MENUITEM_ELECTRO_LEVEL,
         .downIndex = EMPTY
-    }
+    },
+    {   // MENUITEM_GENERATOR
+        .mode = MODE_OFF,
+        .title = EffectString,
+        .string = ModeString[MODE_GENERATOR],
+        .leftIndex = MENUITEM_ELECTRO,
+        .rightIndex = MENUITEM_CLEAR,
+        .upIndex = EMPTY,
+        .downIndex = MENUITEM_GENERATOR_VOLUME
+    },
+    {   // MENUITEM_GENERATOR_VOLUME
+        .mode = MODE_OFF,
+        .title = ModeString[MODE_GENERATOR],
+        .string = VolumeStr,
+        .leftIndex = EMPTY,
+        .rightIndex = EMPTY,
+        .upIndex = MENUITEM_GENERATOR,
+        .downIndex = MENUITEM_GENERATOR_VOLUME_VALUE
+    },
+    {   // MENUITEM_GENERATOR_VOLUME_VALUE
+        .mode = MODE_OFF,
+        .title = GenVolumeTitleStr,
+        .string = displayedParamString,
+        .leftIndex = EMPTY,
+        .rightIndex = EMPTY,
+        .upIndex = MENUITEM_GENERATOR_VOLUME,
+        .downIndex = EMPTY
+    },
 };
 
 
-byte ModeIndex = MODE_CLEAR; //MODE_OFF; // перменная выбора режима работы
+byte ModeIndex = MODE_OFF; // перменная выбора режима работы
 // -------------- кнопка -------------------------------------------------
-#define BTN_CHK_LOOPS 100 // Колличество повторений между проверками кнопки
-byte LoopCount = 0; // Перменная Счетчика циклов пропуска
+#define BTN_CHK_LOOPS 10000 // Колличество повторений между проверками кнопки
+uint16_t LoopCount = 0; // Перменная Счетчика циклов пропуска
 
 enum signalLevelsEn {
     LEVEL_0  = 0,
@@ -481,6 +516,20 @@ int16_t CompressThresholdIndex = 14;
 int ElectroLevelIndex = 15; 
 int ElectroCounter = 0;
 int ElectroOut = 0;
+
+// ---------------------------------------------------------------------------------
+// Generator
+// ---------------------------------------------------------------------------------
+
+int GeneratorVolumeIndex = 3; // 20%
+#define GENERATOR_BUF_SIZE 31
+int GeneratorBufIndex = 0;
+int GeneratorBuf[GENERATOR_BUF_SIZE] = {
+    0, 3, 5, 10, 18, 30, 50, 100, 
+    160, 200, 223, 234, 241, 250, 250, 248, 
+    243, 235, 222, 203, 182, 145, 100, 60, 
+    35, 25, 18, 12, 7, 3, 0
+};
 // ---------------------------------------------------------------------------------
 
 void setup(){
@@ -525,14 +574,15 @@ void setup(){
 bool bypass = false;
 
 void loop() {
+    bool ProtectionDelay = false;
     LoopCount = LoopCount + 1;
     if (LoopCount == BTN_CHK_LOOPS) {
-        if (digitalRead(FOOT_PIN)==HIGH) {
+        if (digitalRead(FOOT_PIN)==LOW) {
             bypass = !bypass;
-        }
+            ProtectionDelay = true;
+        } 
         if (!bypass) {
             int8_t step = 0;
-            bool ProtectionDelay = false;
             //step = enc.read();
             if( (digitalRead(LEFT_PIN)) == LOW ) {
                 switch( currentMenuItem ) {
@@ -545,6 +595,7 @@ void loop() {
                     case MENUITEM_COMPRESS_THRESHOLD_VALUE: if( CompressThresholdIndex > 0 )    CompressThresholdIndex--;   break;
                     case MENUITEM_COMPRESS_NOISE_CUT_VALUE: if( CompressNoiseCutLevelIndex > 0 )CompressNoiseCutLevelIndex--;break;
                     case MENUITEM_ELECTRO_LEVEL_VALUE:      if( ElectroLevelIndex > 0 )         ElectroLevelIndex--;        break;
+                    case MENUITEM_GENERATOR_VOLUME_VALUE:   if( GeneratorVolumeIndex > 0 )      GeneratorVolumeIndex--;     break;
                 }
                 if (menuItem[currentMenuItem].leftIndex != EMPTY) {
                     currentMenuItem = menuItem[currentMenuItem].leftIndex;
@@ -565,6 +616,7 @@ void loop() {
                     case MENUITEM_COMPRESS_THRESHOLD_VALUE: if( CompressThresholdIndex < (LEVELS_COUNT-1) )     CompressThresholdIndex++;   break;
                     case MENUITEM_COMPRESS_NOISE_CUT_VALUE: if( CompressNoiseCutLevelIndex < (COMPRESS_NOISE_CUT_LEVEL_COUNT-1) ) CompressNoiseCutLevelIndex++; break;
                     case MENUITEM_ELECTRO_LEVEL_VALUE:      if( ElectroLevelIndex < (LEVELS_COUNT-1) )          ElectroLevelIndex++;        break;
+                    case MENUITEM_GENERATOR_VOLUME_VALUE:   if( GeneratorVolumeIndex < (LEVELS_COUNT-1) )       GeneratorVolumeIndex++;     break;
                 }
                 if (menuItem[currentMenuItem].rightIndex != EMPTY) {
                     currentMenuItem = menuItem[currentMenuItem].rightIndex;
@@ -593,6 +645,7 @@ void loop() {
                 case MENUITEM_COMPRESS_THRESHOLD_VALUE: strncpy_P(displayedParamString, Levels[CompressThresholdIndex].string, 14);     break;
                 case MENUITEM_COMPRESS_NOISE_CUT_VALUE: strncpy_P(displayedParamString, CompressNoiseCutLevel[CompressNoiseCutLevelIndex].string, 14); break;
                 case MENUITEM_ELECTRO_LEVEL_VALUE:      strncpy_P(displayedParamString, Levels[ElectroLevelIndex].string, 14);          break;
+                case MENUITEM_GENERATOR_VOLUME_VALUE:   strncpy_P(displayedParamString, Levels[GeneratorVolumeIndex].string, 14);       break;
             }
 
 
@@ -620,10 +673,6 @@ void loop() {
             lcd.print(tmp);
             while(spaces2--) lcd.print(" ");
             if( menuItem[currentMenuItem].rightIndex != -1 ) lcd.print(">"); else lcd.print(" ");
-            
-            if (ProtectionDelay) {
-                delay (250);
-            }
         //---------------------------------------------------------------------------------------------
         } else { // устройсво электрически не включено
             lcd.setCursor(0,0);
@@ -632,6 +681,10 @@ void loop() {
             lcd.print("     BYPASS     ");
         }
         LoopCount = 0;
+    }
+            
+    if (ProtectionDelay) {
+        delay (250);
     }
 }
 
@@ -645,72 +698,86 @@ ISR(TIMER1_CAPT_vect) // Команда обработки прерывания 
     ADC_high = ADCH; // читаем старший байт АЦП прочитан вторым
 
     int16_t Signal = ( ((ADC_high << 8) | ADC_low) << 4 ) + 0x8000; // Собираем 16-битн. из 2-х байт полученных в АЦП
+    int16_t level = 0;
 
-    switch (menuItem[currentMenuItem].mode) {
-        //-----------------------------------------------------------------------------------------
-        // ****** Эффект Distortion ******
-        case MODE_DISTORTION: 
-            if (Signal > 0) {
-                // Все что выше DistLevel обрезаем по уровню (DistLevel) и умножаем на DistAmp
-                if (Signal > Levels[DistLevelIndex].value) { Signal = Levels[DistLevelIndex].value; } //
-                Signal = (Signal/8) * DistAmps[DistAmpIndex].value; 
-                if (Signal < 0) { Signal = INT16_MAX; } 
-            } else {
-                // Все что ниже -DistLevel обрезаем и умножаем на DistAmp
-                if (Signal < -Levels[DistLevelIndex].value) { Signal = -Levels[DistLevelIndex].value; }
-                Signal = (Signal/8) * DistAmps[DistAmpIndex].value; 
-                if (Signal > 0) { Signal = INT16_MIN; }
-            }
-            break;
-
-        //-----------------------------------------------------------------------------------------
-        // ****** Эффект Overdrive ******
-        case MODE_OVERDRIVE: 
-            if (Signal > Levels[OverLevelIndex].value) {
-                Signal = Signal - ((Signal - Levels[OverLevelIndex].value)/16)*OverAmps[OverAmpIndex].value; // Все что больше OverLevel Уменьшаем на OverAmp
-            }
-            if (Signal < -Levels[OverLevelIndex].value) {
-                Signal = Signal - ((Signal + Levels[OverLevelIndex].value)/16)*OverAmps[OverAmpIndex].value; // Все что меньше -OverLevel Уменьшаем на OverAmp
-            }
-            break;
-
-        //-----------------------------------------------------------------------------------------
-        // ****** Эффект Chorus ******
-        case MODE_CHORUS: 
-            {
-                static byte horus_write_index = 0;
-                byte horus_out_index = 0;
-                Chorus[horus_write_index] = Signal; // Все время записываем 256 значений -> Chorus[horus_write_index]
-                horus_out_index = horus_write_index - ChorusDelay[ChorusDelayIndex].value;
-                if (Signal < Chorus[horus_out_index]) {
-                    Signal = Chorus[horus_out_index];
+    if (!bypass) {
+        switch (menuItem[currentMenuItem].mode) {
+            case MODE_OFF:
+                Signal = 0;
+                break;
+            //-----------------------------------------------------------------------------------------
+            // ****** Эффект Distortion ******
+            case MODE_DISTORTION: 
+                level = Levels[DistLevelIndex].value;
+                if (Signal > 0) {
+                    // Все что выше DistLevel обрезаем по уровню (DistLevel) и умножаем на DistAmp
+                    if (Signal > level) { Signal = level; } //
+                    Signal = (Signal/8) * DistAmps[DistAmpIndex].value; 
+                    if (Signal < 0) { Signal = INT16_MAX; } 
+                } else {
+                    // Все что ниже -DistLevel обрезаем и умножаем на DistAmp
+                    if (Signal < -level) { Signal = -level; }
+                    Signal = (Signal/8) * DistAmps[DistAmpIndex].value; 
+                    if (Signal > 0) { Signal = INT16_MIN; }
                 }
-                horus_write_index++;
-            }
-            break;
+                break;
 
-        //-----------------------------------------------------------------------------------------
-        // ****** Эффект Compress ******
-        case MODE_COMPRESS: 
-            if (Signal > CompressNoiseCutLevel[CompressNoiseCutLevelIndex].value ) {
-                Signal = Signal + (Levels[CompressThresholdIndex].value - Signal)/CompressKoeff[CompressKoeffIndex].value;
-            }
-            if (Signal < -CompressNoiseCutLevel[CompressNoiseCutLevelIndex].value ) {
-                Signal = Signal - (Levels[CompressThresholdIndex].value + Signal)/CompressKoeff[CompressKoeffIndex].value;
-            }
-            break;
+            //-----------------------------------------------------------------------------------------
+            // ****** Эффект Overdrive ******
+            case MODE_OVERDRIVE: 
+                if (Signal > Levels[OverLevelIndex].value) {
+                    Signal = Signal - ((Signal - Levels[OverLevelIndex].value)/16)*OverAmps[OverAmpIndex].value; // Все что больше OverLevel Уменьшаем на OverAmp
+                }
+                if (Signal < -Levels[OverLevelIndex].value) {
+                    Signal = Signal - ((Signal + Levels[OverLevelIndex].value)/16)*OverAmps[OverAmpIndex].value; // Все что меньше -OverLevel Уменьшаем на OverAmp
+                }
+                break;
 
-        //-----------------------------------------------------------------------------------------
-        // ****** Эффект Electro ******
-        case MODE_ELECTRO: 
-            if (ElectroCounter > Levels[ElectroLevelIndex].value) {
-                ElectroOut = Signal;
-                ElectroCounter = 0;
-            } else {
-                Signal = ElectroOut;
-            }
-            ElectroCounter++;
-            break;
+            //-----------------------------------------------------------------------------------------
+            // ****** Эффект Chorus ******
+            case MODE_CHORUS: 
+                {
+                    static byte horus_write_index = 0;
+                    byte horus_out_index = 0;
+                    Chorus[horus_write_index] = Signal; // Все время записываем 256 значений -> Chorus[horus_write_index]
+                    horus_out_index = horus_write_index - ChorusDelay[ChorusDelayIndex].value;
+                    if (Signal < Chorus[horus_out_index]) {
+                        Signal = Chorus[horus_out_index];
+                    }
+                    horus_write_index++;
+                }
+                break;
+
+            //-----------------------------------------------------------------------------------------
+            // ****** Эффект Compress ******
+            case MODE_COMPRESS: 
+                if (Signal > CompressNoiseCutLevel[CompressNoiseCutLevelIndex].value ) {
+                    Signal = Signal + (Levels[CompressThresholdIndex].value - Signal)/CompressKoeff[CompressKoeffIndex].value;
+                }
+                if (Signal < -CompressNoiseCutLevel[CompressNoiseCutLevelIndex].value ) {
+                    Signal = Signal - (Levels[CompressThresholdIndex].value + Signal)/CompressKoeff[CompressKoeffIndex].value;
+                }
+                break;
+
+            //-----------------------------------------------------------------------------------------
+            // ****** Эффект Electro ******
+            case MODE_ELECTRO: 
+                if (ElectroCounter > Levels[ElectroLevelIndex].value) {
+                    ElectroOut = Signal;
+                    ElectroCounter = 0;
+                } else {
+                    Signal = ElectroOut;
+                }
+                ElectroCounter++;
+                break;
+
+            //-----------------------------------------------------------------------------------------
+            // ****** Generator ******
+            case MODE_GENERATOR:
+                if( GeneratorBufIndex >= GENERATOR_BUF_SIZE ) GeneratorBufIndex = 0;
+                Signal = ((GeneratorBuf[GeneratorBufIndex])<<8 / 20) * GeneratorVolumeIndex;
+                GeneratorBufIndex++;
+        }
     }
     //-----------------------------------------------------------------------------------------
 
