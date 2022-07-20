@@ -10,7 +10,7 @@ https://radioprog.ru/post/533
 * D6 - Enter
 * D7 - Exit
 * D12 - педаль включения-выключения
-![alt text](https://github.com/meatdeath/GuitarPedal/blob/main/Source_schematic.jpg)
+![alt text](https://github.com/meatdeath/GuitarPedal/blob/main/doc/Source_schematic.jpg)
 
 Полезные ссылки:
 * https://ru.wikipedia.org/wiki/%D0%9E%D0%B2%D0%B5%D1%80%D0%B4%D1%80%D0%B0%D0%B9%D0%B2_(%D0%B7%D0%B2%D1%83%D0%BA%D0%BE%D0%B2%D0%BE%D0%B9_%D1%8D%D1%84%D1%84%D0%B5%D0%BA%D1%82)
